@@ -11,9 +11,9 @@ export async function backgroundCheck({ customerId, userId, authHeader }: Backgr
   const approvalRequestId = await requestApproval({ customerId, userId, authHeader })
   await poll(() => getApprovalStatus({ approvalRequestId, targetStatus: 'complete', authHeader }))
 
-  const ssnSearchId = await performSearch({ type: 'ssn', customerId, userId, authHeader })
-  const creditSearchId = await performSearch({ type: 'credit', customerId, userId, authHeader })
-  const socialSearchId = await performSearch({ type: 'social', customerId, userId, authHeader })
+  const [ssnSearchId, creditSearchId, socialSearchId] = await Promise.all(
+    ['ssn', 'credit', 'social'].map((type) => performSearch({ type, customerId, userId, authHeader }))
+  )
 
   await sendReport({ customerId, userId, approvalRequestId, ssnSearchId, creditSearchId, socialSearchId, authHeader })
 }
