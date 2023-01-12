@@ -8,29 +8,34 @@ interface BackgroundCheckInput {
 }
 
 export async function backgroundCheck({ customerId, userId, authHeader }: BackgroundCheckInput): Promise<void> {
-  const approvalRequestId = await requestApproval({ customerId, userId, authHeader })
-  await poll(() => getApprovalStatus({ approvalRequestId, targetStatus: 'complete', authHeader }))
+  const approvalRequestId = await retry(() => requestApproval({ customerId, userId, authHeader }))
+  await retry(() => getApprovalStatus({ approvalRequestId, targetStatus: 'complete', authHeader }))
 
   const [ssnSearchId, creditSearchId, socialSearchId] = await Promise.all(
     ['ssn', 'credit', 'social'].map((type) => performSearch({ type, customerId, userId, authHeader }))
   )
 
-  await sendReport({ customerId, userId, approvalRequestId, ssnSearchId, creditSearchId, socialSearchId, authHeader })
+  await retry(() =>
+    sendReport({ customerId, userId, approvalRequestId, ssnSearchId, creditSearchId, socialSearchId, authHeader })
+  )
 }
 
 async function performSearch(info: SearchInfo) {
-  await startSearch(info)
-  const searchResult = await poll(() => getSearchResult({ ...info, targetStatus: 'complete' }))
+  await retry(() => startSearch(info))
+  const searchResult = await retry(() => getSearchResult({ ...info, targetStatus: 'complete' }))
   return searchResult
 }
 
-async function poll<T>(fn: () => Promise<T>): Promise<T> {
+async function retry<T>(fn: () => Promise<T>): Promise<T> {
+  let attempt = 1
   while (true) {
     try {
       return await fn()
     } catch (err) {
       console.error('Retrying:', (err as Error).message)
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      const interval = 1000 * Math.pow(2, attempt)
+      await new Promise((resolve) => setTimeout(resolve, interval))
+      attempt++
     }
   }
 }
