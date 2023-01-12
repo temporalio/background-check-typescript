@@ -11,7 +11,11 @@ export async function requestApproval({
   userId: string
   authHeader: AuthHeader
 }): Promise<string> {
-  const response = await axios.post(`${API}/notify`, { customer: customerId, user: userId }, authHeader)
+  const response = await axios.post(
+    `${API}/notify`,
+    { customer: customerId, user: userId },
+    { ...authHeader, timeout: 1000 }
+  )
   console.log('▶️ requestApproval response:', response.data)
   const requestId = response.data.uuid
   return requestId
@@ -26,7 +30,7 @@ export async function getApprovalStatus({
   targetStatus: StatusEnum
   authHeader: AuthHeader
 }): Promise<void> {
-  const response = await axios.get(`${API}/notify/${approvalRequestId}`, authHeader)
+  const response = await axios.get(`${API}/notify/${approvalRequestId}`, { ...authHeader, timeout: 1000 })
   console.log('▶️ pollForApproval response:', response.data)
 
   const status = (response.data as Status).status
@@ -43,7 +47,7 @@ export async function getApprovalStatus({
 }
 
 export async function startSearch({ type, customerId, userId, authHeader }: SearchInfo): Promise<void> {
-  await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId }, authHeader)
+  await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId }, { ...authHeader, timeout: 1000 })
 }
 
 type PollSearchInfo = SearchInfo & { targetStatus: StatusEnum }
@@ -58,6 +62,7 @@ export async function getSearchResult({
   const response = await axios.get(`${API}/search/${type}`, {
     params: { user: userId, customer: customerId },
     ...authHeader,
+    timeout: 1000,
   })
   console.log('▶️ pollForSearchResult response:', response.data)
 
@@ -101,7 +106,7 @@ export async function sendReport({
       social: socialSearchId,
       credit: creditSearchId,
     },
-    authHeader
+    { ...authHeader, timeout: 1000 }
   )
   console.log('▶️ sendReport response:', response.data)
 }
