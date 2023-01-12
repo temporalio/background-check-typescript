@@ -68,7 +68,7 @@ export async function getSearchResult({
     case 'running':
       throw new Error('Search still in progress')
     case targetStatus:
-      return data.confirmation! // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      return data.confirmation!
     default:
       throw new Error(`Unknown status: ${data.status}`)
   }
