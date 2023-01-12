@@ -17,7 +17,7 @@ export async function requestApproval({
   return requestId
 }
 
-export async function pollForApproval({
+export async function getApprovalStatus({
   approvalRequestId,
   targetStatus,
   authHeader,
@@ -48,7 +48,7 @@ export async function startSearch({ type, customerId, userId, authHeader }: Sear
 
 type PollSearchInfo = SearchInfo & { targetStatus: StatusEnum }
 
-export async function pollForSearchResult({
+export async function getSearchResult({
   type,
   customerId,
   userId,

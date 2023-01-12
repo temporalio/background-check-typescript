@@ -1,4 +1,4 @@
-import { requestApproval, pollForApproval, startSearch, pollForSearchResult, sendReport } from './activities'
+import { requestApproval, getApprovalStatus, startSearch, getSearchResult, sendReport } from './activities'
 import { AuthHeader, SearchInfo } from './types'
 
 interface BackgroundCheckInput {
@@ -9,7 +9,7 @@ interface BackgroundCheckInput {
 
 export async function backgroundCheck({ customerId, userId, authHeader }: BackgroundCheckInput): Promise<void> {
   const approvalRequestId = await requestApproval({ customerId, userId, authHeader })
-  await pollForApproval({ approvalRequestId, targetStatus: 'complete', authHeader })
+  await getApprovalStatus({ approvalRequestId, targetStatus: 'complete', authHeader })
 
   const ssnSearchId = await performSearch({ type: 'ssn', customerId, userId, authHeader })
   const creditSearchId = await performSearch({ type: 'credit', customerId, userId, authHeader })
@@ -20,6 +20,6 @@ export async function backgroundCheck({ customerId, userId, authHeader }: Backgr
 
 async function performSearch(info: SearchInfo) {
   await startSearch(info)
-  const searchResult = await pollForSearchResult({ ...info, targetStatus: 'complete' })
+  const searchResult = await getSearchResult({ ...info, targetStatus: 'complete' })
   return searchResult
 }
