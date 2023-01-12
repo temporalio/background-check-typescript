@@ -11,10 +11,12 @@ if (args.length !== 3) {
 const [username, level, ngrokUrl] = args
 
 async function startServer() {
-  await runApiServer({ username, ngrokUrl })
+  const authHeader = { headers: { Authorization: '' } }
+  await runApiServer({ username, ngrokUrl, authHeader })
 
   const authToken = await registerUser(username)
-  await startRound({ authToken, level, ngrokUrl })
+  authHeader.headers.Authorization = `Basic ${username}:${authToken}`
+  await startRound({ level, ngrokUrl, authHeader })
 }
 
 startServer().catch((err) => {

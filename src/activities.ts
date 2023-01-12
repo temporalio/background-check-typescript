@@ -1,9 +1,17 @@
 import axios from 'axios'
 import { API } from './constants'
-import { Status, StatusEnum, StatusConfirmation, SearchInfo } from './types'
+import { Status, StatusEnum, StatusConfirmation, SearchInfo, AuthHeader } from './types'
 
-export async function requestApproval({ customerId, userId }: { customerId: string; userId: string }): Promise<string> {
-  const response = await axios.post(`${API}/notify`, { customer: customerId, user: userId })
+export async function requestApproval({
+  customerId,
+  userId,
+  authHeader,
+}: {
+  customerId: string
+  userId: string
+  authHeader: AuthHeader
+}): Promise<string> {
+  const response = await axios.post(`${API}/notify`, { customer: customerId, user: userId }, authHeader)
   console.log('▶️ requestApproval response:', response.data)
   const requestId = response.data.uuid
   return requestId
@@ -12,11 +20,13 @@ export async function requestApproval({ customerId, userId }: { customerId: stri
 export async function pollForApproval({
   approvalRequestId,
   targetStatus,
+  authHeader,
 }: {
   approvalRequestId: string
   targetStatus: StatusEnum
+  authHeader: AuthHeader
 }): Promise<void> {
-  const response = await axios.get(`${API}/notify/${approvalRequestId}`)
+  const response = await axios.get(`${API}/notify/${approvalRequestId}`, authHeader)
   console.log('▶️ pollForApproval response:', response.data)
   const status = (response.data as Status).status
   if (status !== targetStatus) {
@@ -24,15 +34,22 @@ export async function pollForApproval({
   }
 }
 
-export async function startSearch({ type, customerId, userId }: SearchInfo): Promise<void> {
-  await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId })
+export async function startSearch({ type, customerId, userId, authHeader }: SearchInfo): Promise<void> {
+  await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId }, authHeader)
 }
 
 type PollSearchInfo = SearchInfo & { targetStatus: StatusEnum }
 
-export async function pollForSearchResult({ type, customerId, userId, targetStatus }: PollSearchInfo): Promise<string> {
+export async function pollForSearchResult({
+  type,
+  customerId,
+  userId,
+  targetStatus,
+  authHeader,
+}: PollSearchInfo): Promise<string> {
   const response = await axios.get(`${API}/search/${type}`, {
     params: { user: userId, customer: customerId },
+    ...authHeader,
   })
   console.log('▶️ pollForSearchResult response:', response.data)
   const data = response.data as StatusConfirmation
@@ -50,6 +67,7 @@ export async function sendReport({
   ssnSearchId,
   creditSearchId,
   socialSearchId,
+  authHeader,
 }: {
   customerId: string
   userId: string
@@ -57,14 +75,19 @@ export async function sendReport({
   ssnSearchId: string
   creditSearchId: string
   socialSearchId: string
+  authHeader: AuthHeader
 }): Promise<void> {
-  const response = await axios.post(`${API}/notify/report`, {
-    customer: customerId,
-    user: userId,
-    notify: approvalRequestId,
-    ssn: ssnSearchId,
-    social: socialSearchId,
-    credit: creditSearchId,
-  })
+  const response = await axios.post(
+    `${API}/notify/report`,
+    {
+      customer: customerId,
+      user: userId,
+      notify: approvalRequestId,
+      ssn: ssnSearchId,
+      social: socialSearchId,
+      credit: creditSearchId,
+    },
+    authHeader
+  )
   console.log('▶️ sendReport response:', response.data)
 }
