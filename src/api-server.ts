@@ -1,5 +1,4 @@
 import express from 'express'
-import { Client } from '@temporalio/client'
 import { backgroundCheck } from './workflows'
 
 type Action = 'start' | 'cancel'
@@ -10,8 +9,6 @@ interface BackgroundBody {
 }
 
 export async function runApiServer({ username, ngrokUrl, port = 3000 }: any) {
-  const client = new Client()
-
   const app = express()
   app.use(express.json())
 
@@ -27,16 +24,10 @@ export async function runApiServer({ username, ngrokUrl, port = 3000 }: any) {
   app.post('/background', async (req, res) => {
     console.log(`Receiving HTTP request: POST /background with body:`, req.body)
     const { customerId, userId, action } = req.body as BackgroundBody
-    const workflowId = `${customerId}__${userId}`
     if (action === 'start') {
-      await client.workflow.start(backgroundCheck, {
-        args: [{ customerId, userId }],
-        taskQueue: 'background-check',
-        workflowId,
-      })
+      void backgroundCheck({ customerId, userId })
     } else if (action === 'cancel') {
-      const workflow = client.workflow.getHandle(workflowId)
-      await workflow.cancel()
+      // TODO: Cancel background check
     }
     res.status(200).end()
   })

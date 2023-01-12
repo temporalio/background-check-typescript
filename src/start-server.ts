@@ -1,7 +1,6 @@
 import { runApiServer } from './api-server'
 import { registerUser } from './register-user'
 import { startRound } from './start-round'
-import { runWorker } from './worker'
 
 const args = process.argv.slice(2)
 if (args.length !== 3) {
@@ -13,7 +12,6 @@ const [username, level, ngrokUrl] = args
 
 async function startServer() {
   await runApiServer({ username, ngrokUrl })
-  void runWorker()
 
   const authToken = await registerUser(username)
   await startRound({ authToken, level, ngrokUrl })

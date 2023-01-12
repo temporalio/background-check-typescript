@@ -1,14 +1,9 @@
-import { Context } from '@temporalio/activity'
 import axios from 'axios'
 import { API } from './constants'
 import { Status, StatusEnum, StatusConfirmation, SearchInfo } from './types'
 
 export async function requestApproval({ customerId, userId }: { customerId: string; userId: string }): Promise<string> {
-  const response = await axios.post(
-    `${API}/notify`,
-    { customer: customerId, user: userId },
-    { signal: Context.current().cancellationSignal }
-  )
+  const response = await axios.post(`${API}/notify`, { customer: customerId, user: userId })
   console.log('▶️ requestApproval response:', response.data)
   const requestId = response.data.uuid
   return requestId
@@ -21,9 +16,7 @@ export async function pollForApproval({
   approvalRequestId: string
   targetStatus: StatusEnum
 }): Promise<void> {
-  const response = await axios.get(`${API}/notify/${approvalRequestId}`, {
-    signal: Context.current().cancellationSignal,
-  })
+  const response = await axios.get(`${API}/notify/${approvalRequestId}`)
   console.log('▶️ pollForApproval response:', response.data)
   const status = (response.data as Status).status
   if (status !== targetStatus) {
@@ -32,11 +25,7 @@ export async function pollForApproval({
 }
 
 export async function startSearch({ type, customerId, userId }: SearchInfo): Promise<void> {
-  await axios.post(
-    `${API}/search/${type}`,
-    { customer: customerId, user: userId },
-    { signal: Context.current().cancellationSignal }
-  )
+  await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId })
 }
 
 type PollSearchInfo = SearchInfo & { targetStatus: StatusEnum }
@@ -44,7 +33,6 @@ type PollSearchInfo = SearchInfo & { targetStatus: StatusEnum }
 export async function pollForSearchResult({ type, customerId, userId, targetStatus }: PollSearchInfo): Promise<string> {
   const response = await axios.get(`${API}/search/${type}`, {
     params: { user: userId, customer: customerId },
-    signal: Context.current().cancellationSignal,
   })
   console.log('▶️ pollForSearchResult response:', response.data)
   const data = response.data as StatusConfirmation
