@@ -30,7 +30,7 @@ async function poll<T>(fn: () => Promise<T>): Promise<T> {
       return await fn()
     } catch (err) {
       console.error('Retrying:', (err as Error).message)
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
     }
   }
 }
