@@ -1,18 +1,16 @@
-# Hello World
+# Background Check TypeScript
 
-This is the default project that is scaffolded out when you run `npx @temporalio/create@latest ./myfolder`.
 
-The [Hello World Tutorial](https://docs.temporal.io/typescript/hello-world/) walks through the code in this sample.
+### Running the code
 
-### Running this sample
+- `temporal server start-dev` to start [Temporal Server](https://github.com/temporalio/cli/#installation)
+- `git clone https://github.com/temporalio/background-check-typescript.git`
+- `cd background-check-typescript`
+- `npm install` to install dependencies
+- `brew install ngrok` for Mac or [click here](https://ngrok.com/download) for other platforms
+- `ngrok http 3000` to create a publicly accessible URL like `https://9226-71-190-188-101.ngrok.io`
+- `npm run start.watch <username> <ngrok URL> ` to start the server, for example:
 
-1. Make sure Temporal Server is running locally (see the [quick install guide](https://docs.temporal.io/server/quick-install/)).
-1. `npm install` to install dependencies.
-1. `npm run start.watch` to start the Worker.
-1. In another shell, `npm run workflow` to run the Workflow Client.
-
-The Workflow should return:
-
-```bash
-Hello, Temporal!
-```
+  ```
+  npm run start.watch loren https://9226-71-190-188-101.ngrok.io
+  ```

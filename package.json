@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "start": "ts-node src/start-server.ts",
+    "start.watch": "nodemon src/start-server.ts",
     "build": "tsc --build",
     "build.watch": "tsc --build --watch",
     "lint": "eslint .",
-    "start": "ts-node src/worker.ts",
-    "start.watch": "nodemon src/worker.ts",
-    "workflow": "ts-node src/client.ts"
+    "update-external-api": "curl http://127.0.0.1:8000/openapi.json | openapi-typescript --output src/external-api.ts"
   },
   "nodemonConfig": {
     "execMap": {
@@ -24,10 +24,13 @@
     "@temporalio/client": "^1.5.2",
     "@temporalio/worker": "^1.5.2",
     "@temporalio/workflow": "^1.5.2",
+    "axios": "^1.2.2",
+    "express": "^4.18.2",
     "nanoid": "3.x"
   },
   "devDependencies": {
     "@tsconfig/node18": "^1.0.0",
+    "@types/express": "^4.17.15",
     "@types/node": "^16.11.43",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
@@ -35,6 +38,7 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-deprecation": "^1.2.1",
     "nodemon": "^2.0.12",
+    "openapi-typescript": "^6.1.0",
     "ts-node": "^10.8.1",
     "typescript": "^4.4.2"
   }
