@@ -28,9 +28,17 @@ export async function pollForApproval({
 }): Promise<void> {
   const response = await axios.get(`${API}/notify/${approvalRequestId}`, authHeader)
   console.log('▶️ pollForApproval response:', response.data)
+
   const status = (response.data as Status).status
-  if (status !== targetStatus) {
-    throw new Error('Approval still in progress')
+  switch (status) {
+    case 'started':
+    case 'pending':
+    case 'running':
+      throw new Error('Approval still in progress')
+    case targetStatus:
+      return
+    default:
+      throw new Error(`Unknown status: ${status}`)
   }
 }
 
@@ -52,12 +60,18 @@ export async function pollForSearchResult({
     ...authHeader,
   })
   console.log('▶️ pollForSearchResult response:', response.data)
-  const data = response.data as StatusConfirmation
-  if (data.status !== targetStatus) {
-    throw new Error('Search still in progress')
-  }
 
-  return data.confirmation! // eslint-disable-line @typescript-eslint/no-non-null-assertion
+  const data = response.data as StatusConfirmation
+  switch (data.status) {
+    case 'started':
+    case 'pending':
+    case 'running':
+      throw new Error('Search still in progress')
+    case targetStatus:
+      return data.confirmation! // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    default:
+      throw new Error(`Unknown status: ${data.status}`)
+  }
 }
 
 export async function sendReport({
