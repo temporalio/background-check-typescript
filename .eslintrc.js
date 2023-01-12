@@ -1,6 +1,6 @@
-const { builtinModules } = require('module');
+const { builtinModules } = require('module')
 
-const ALLOWED_NODE_BUILTINS = new Set(['assert']);
+const ALLOWED_NODE_BUILTINS = new Set(['assert'])
 
 module.exports = {
   root: true,
@@ -33,6 +33,8 @@ module.exports = {
       },
     ],
     '@typescript-eslint/no-explicit-any': 'off',
+    'no-constant-condition': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
   },
   overrides: [
     {
@@ -45,4 +47,4 @@ module.exports = {
       },
     },
   ],
-};
+}
