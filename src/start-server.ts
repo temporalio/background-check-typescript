@@ -17,9 +17,9 @@ async function startServer() {
   const authToken = await registerUser(username)
   const authHeader = { headers: { Authorization: `Basic ${username}:${authToken}` } }
 
-  void runWorker(authHeader)
-
   await startRound({ level, ngrokUrl, authHeader })
+
+  await runWorker(authHeader)
 }
 
 startServer().catch((err) => {
