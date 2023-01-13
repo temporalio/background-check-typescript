@@ -43,9 +43,14 @@ export async function backgroundCheck({ customerId, userId }: BackgroundCheckInp
       ])
     } catch (err) {
       console.log((err as Error).message)
+
+      // If it's a CancelledFailure, rethrow it to "accept" cancellation
+      // i.e. let the Workflow end with Cancelled status
       if (isCancellation(err)) {
         throw err
       }
+      // Otherwise, it's a approval rejection. We don't throw, so that the
+      // Workflow ends with Completed status instead of Failed status.
     }
   } finally {
     await CancellationScope.nonCancellable(async () =>
