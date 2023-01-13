@@ -20,6 +20,6 @@ export async function backgroundCheck({ customerId, userId, authHeader }: Backgr
 
 async function performSearch(info: SearchInfo) {
   await startSearch(info)
-  const searchResult = await getSearchResult({ ...info, targetStatus: 'complete' })
-  return searchResult
+  const searchId = await getSearchResult({ ...info, targetStatus: 'complete' })
+  return searchId
 }
