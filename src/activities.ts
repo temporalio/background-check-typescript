@@ -8,6 +8,7 @@ export const createActivities = (authHeader: AuthHeader) => ({
   async requestApproval({ customerId, userId }: { customerId: string; userId: string }): Promise<string> {
     const response = await axios.post(`${API}/notify`, { customer: customerId, user: userId }, authHeader)
     console.log('📡 requestApproval response:', response.data)
+
     const requestId = response.data.uuid
     return requestId
   },
