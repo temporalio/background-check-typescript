@@ -22,8 +22,8 @@ export async function backgroundCheck({ customerId, userId, authHeader }: Backgr
 
 async function performSearch(info: SearchInfo) {
   await retry(() => startSearch(info))
-  const searchResult = await retry(() => getSearchResult({ ...info, targetStatus: 'complete' }))
-  return searchResult
+  const searchId = await retry(() => getSearchResult({ ...info, targetStatus: 'complete' }))
+  return searchId
 }
 
 async function retry<T>(fn: () => Promise<T>): Promise<T> {
