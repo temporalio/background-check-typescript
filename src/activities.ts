@@ -17,6 +17,7 @@ export async function requestApproval({
     { ...authHeader, timeout: 1000 }
   )
   console.log('📡 requestApproval response:', response.data)
+
   const requestId = response.data.uuid
   return requestId
 }
