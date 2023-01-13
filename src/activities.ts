@@ -6,11 +6,7 @@ type PollSearchInfo = SearchInfo & { targetStatus: StatusEnum }
 
 export const createActivities = (authHeader: AuthHeader) => ({
   async requestApproval({ customerId, userId }: { customerId: string; userId: string }): Promise<string> {
-    const response = await axios.post(
-      `${API}/notify`,
-      { customer: customerId, user: userId },
-      { ...authHeader, timeout: 1000 }
-    )
+    const response = await axios.post(`${API}/notify`, { customer: customerId, user: userId }, authHeader)
     console.log('📡 requestApproval response:', response.data)
     const requestId = response.data.uuid
     return requestId
@@ -23,7 +19,7 @@ export const createActivities = (authHeader: AuthHeader) => ({
     approvalRequestId: string
     targetStatus: StatusEnum
   }): Promise<void> {
-    const response = await axios.get(`${API}/notify/${approvalRequestId}`, { ...authHeader, timeout: 1000 })
+    const response = await axios.get(`${API}/notify/${approvalRequestId}`, authHeader)
     console.log('📡 getApprovalStatus response:', response.data)
 
     const status = (response.data as Status).status
@@ -40,14 +36,13 @@ export const createActivities = (authHeader: AuthHeader) => ({
   },
 
   async startSearch({ type, customerId, userId }: SearchInfo): Promise<void> {
-    await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId }, { ...authHeader, timeout: 1000 })
+    await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId }, authHeader)
   },
 
   async getSearchResult({ type, customerId, userId, targetStatus }: PollSearchInfo): Promise<string> {
     const response = await axios.get(`${API}/search/${type}`, {
       params: { user: userId, customer: customerId },
       ...authHeader,
-      timeout: 1000,
     })
     console.log('📡 getSearchResult response:', response.data)
 
@@ -89,7 +84,7 @@ export const createActivities = (authHeader: AuthHeader) => ({
         social: socialSearchId,
         credit: creditSearchId,
       },
-      { ...authHeader, timeout: 1000 }
+      authHeader
     )
     console.log('📡 sendReport response:', response.data)
   },
