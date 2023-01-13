@@ -11,5 +11,4 @@ export interface SearchInfo {
   type: string
   customerId: string
   userId: string
-  authHeader: AuthHeader
 }

@@ -1,5 +1,5 @@
 import express from 'express'
-import { AuthHeader } from './types'
+import { Client } from '@temporalio/client'
 import { backgroundCheck } from './workflows'
 
 type Action = 'start' | 'cancel'
@@ -12,11 +12,11 @@ interface BackgroundBody {
 interface ApiServerOptions {
   username: string
   ngrokUrl: string
-  authHeader: AuthHeader
   port?: number
 }
 
-export async function runApiServer({ username, ngrokUrl, authHeader, port = 3000 }: ApiServerOptions) {
+export async function runApiServer({ username, ngrokUrl, port = 3000 }: ApiServerOptions) {
+  const client = new Client()
   const app = express()
   app.use(express.json())
 
@@ -32,8 +32,13 @@ export async function runApiServer({ username, ngrokUrl, authHeader, port = 3000
   app.post('/background', async (req, res) => {
     console.log(`Receiving HTTP request: POST /background with body:`, req.body)
     const { customerId, userId, action } = req.body as BackgroundBody
+    const workflowId = `${customerId}__${userId}`
     if (action === 'start') {
-      void backgroundCheck({ customerId, userId, authHeader })
+      await client.workflow.start(backgroundCheck, {
+        args: [{ customerId, userId }],
+        taskQueue: 'background-check',
+        workflowId,
+      })
     } else if (action === 'cancel') {
       // TODO: Cancel background check
     }

@@ -1,6 +1,7 @@
 import { runApiServer } from './api-server'
 import { registerUser } from './register-user'
 import { startRound } from './start-round'
+import { runWorker } from './worker'
 
 const args = process.argv.slice(2)
 if (args.length !== 3) {
@@ -11,11 +12,13 @@ if (args.length !== 3) {
 const [username, level, ngrokUrl] = args
 
 async function startServer() {
-  const authHeader = { headers: { Authorization: '' } }
-  await runApiServer({ username, ngrokUrl, authHeader })
+  await runApiServer({ username, ngrokUrl })
 
   const authToken = await registerUser(username)
-  authHeader.headers.Authorization = `Basic ${username}:${authToken}`
+  const authHeader = { headers: { Authorization: `Basic ${username}:${authToken}` } }
+
+  void runWorker(authHeader)
+
   await startRound({ level, ngrokUrl, authHeader })
 }
 
