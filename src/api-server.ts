@@ -40,7 +40,8 @@ export async function runApiServer({ username, ngrokUrl, port = 3000 }: ApiServe
         workflowId,
       })
     } else if (action === 'cancel') {
-      // TODO: Cancel background check
+      const workflow = client.workflow.getHandle(workflowId)
+      await workflow.cancel()
     }
     res.status(200).end()
   })
