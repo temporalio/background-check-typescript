@@ -16,7 +16,7 @@ export async function requestApproval({
     { customer: customerId, user: userId },
     { ...authHeader, timeout: 1000 }
   )
-  console.log('▶️ requestApproval response:', response.data)
+  console.log('📡 requestApproval response:', response.data)
   const requestId = response.data.uuid
   return requestId
 }
@@ -31,7 +31,7 @@ export async function getApprovalStatus({
   authHeader: AuthHeader
 }): Promise<void> {
   const response = await axios.get(`${API}/notify/${approvalRequestId}`, { ...authHeader, timeout: 1000 })
-  console.log('▶️ pollForApproval response:', response.data)
+  console.log('📡 getApprovalStatus response:', response.data)
 
   const status = (response.data as Status).status
   switch (status) {
@@ -64,7 +64,7 @@ export async function getSearchResult({
     ...authHeader,
     timeout: 1000,
   })
-  console.log('▶️ pollForSearchResult response:', response.data)
+  console.log('📡 getSearchResult response:', response.data)
 
   const data = response.data as StatusConfirmation
   switch (data.status) {
@@ -108,5 +108,5 @@ export async function sendReport({
     },
     { ...authHeader, timeout: 1000 }
   )
-  console.log('▶️ sendReport response:', response.data)
+  console.log('📡 sendReport response:', response.data)
 }
