@@ -14,12 +14,22 @@ interface BackgroundCheckInput {
 }
 
 export async function backgroundCheck({ customerId, userId }: BackgroundCheckInput): Promise<void> {
-  const approvalRequestId = await requestApproval({ customerId, userId })
-  await getApprovalStatus({ approvalRequestId, targetStatus: 'complete' })
+  let ssnSearchId: string | undefined = undefined
+  let creditSearchId: string | undefined = undefined
+  let socialSearchId: string | undefined = undefined
 
-  const [ssnSearchId, creditSearchId, socialSearchId] = await Promise.all(
-    ['ssn', 'credit', 'social'].map((type) => performSearch({ type, customerId, userId }))
-  )
+  const approvalRequestId = await requestApproval({ customerId, userId })
+  try {
+    await getApprovalStatus({ approvalRequestId, targetStatus: 'complete' })
+
+    await Promise.all([
+      async () => (ssnSearchId = await performSearch({ type: 'ssn', customerId, userId })),
+      async () => (creditSearchId = await performSearch({ type: 'credit', customerId, userId })),
+      async () => (socialSearchId = await performSearch({ type: 'social', customerId, userId })),
+    ])
+  } catch (err) {
+    console.log((err as Error).message)
+  }
 
   await sendReport({ customerId, userId, approvalRequestId, ssnSearchId, creditSearchId, socialSearchId })
 }

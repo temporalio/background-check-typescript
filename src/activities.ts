@@ -1,3 +1,4 @@
+import { ApplicationFailure } from '@temporalio/activity'
 import axios from 'axios'
 import { API } from './constants'
 import { Status, StatusEnum, StatusConfirmation, SearchInfo, AuthHeader } from './types'
@@ -29,6 +30,8 @@ export const createActivities = (authHeader: AuthHeader) => ({
       case 'pending':
       case 'running':
         throw new Error('Approval still in progress')
+      case 'rejected':
+        throw ApplicationFailure.create({ message: 'Approval denied', nonRetryable: true })
       case targetStatus:
         return
       default:
@@ -71,9 +74,9 @@ export const createActivities = (authHeader: AuthHeader) => ({
     customerId: string
     userId: string
     approvalRequestId: string
-    ssnSearchId: string
-    creditSearchId: string
-    socialSearchId: string
+    ssnSearchId?: string
+    creditSearchId?: string
+    socialSearchId?: string
   }): Promise<void> {
     const response = await axios.post(
       `${API}/notify/report`,
