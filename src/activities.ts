@@ -13,6 +13,7 @@ export async function requestApproval({
 }): Promise<string> {
   const response = await axios.post(`${API}/notify`, { customer: customerId, user: userId }, authHeader)
   console.log('📡 requestApproval response:', response.data)
+
   const requestId = response.data.uuid
   return requestId
 }
