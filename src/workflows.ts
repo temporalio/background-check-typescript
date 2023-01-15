@@ -13,24 +13,24 @@ interface BackgroundCheckInput {
 }
 
 export async function backgroundCheck({ customerId, userId }: BackgroundCheckInput): Promise<void> {
-  let approvalRequestId: string | undefined = undefined
+  let approvalId: string | undefined = undefined
   let ssnSearchId: string | undefined = undefined
   let creditSearchId: string | undefined = undefined
   let socialSearchId: string | undefined = undefined
 
   try {
-    approvalRequestId = await requestApproval({ customerId, userId })
+    await requestApproval({ customerId, userId })
 
     try {
       try {
-        await getApprovalStatus({ approvalRequestId, targetStatus: 'complete' })
+        approvalId = await getApprovalStatus({ customerId, userId, targetStatus: 'complete' })
       } catch (err) {
         if (isCancellation(err)) {
           await CancellationScope.nonCancellable(async () => {
-            await cancelApproval({ approvalRequestId: approvalRequestId! })
+            await cancelApproval({ approvalId: approvalId! })
 
             // wait for cancellation to complete
-            await getApprovalStatus({ approvalRequestId: approvalRequestId!, targetStatus: 'cancelled' })
+            approvalId = await getApprovalStatus({ customerId, userId, targetStatus: 'cancelled' })
           })
         }
         throw err
@@ -54,7 +54,7 @@ export async function backgroundCheck({ customerId, userId }: BackgroundCheckInp
     }
   } finally {
     await CancellationScope.nonCancellable(async () =>
-      sendReport({ customerId, userId, approvalRequestId, ssnSearchId, creditSearchId, socialSearchId })
+      sendReport({ customerId, userId, approvalId, ssnSearchId, creditSearchId, socialSearchId })
     )
   }
 }

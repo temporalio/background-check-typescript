@@ -15,11 +15,11 @@ async function startServer() {
   await runApiServer({ username, ngrokUrl })
 
   const authToken = await registerUser(username)
-  const authHeader = { headers: { Authorization: `Basic ${username}:${authToken}` } }
+  const auth = { username, password: authToken }
 
-  await startRound({ level, ngrokUrl, authHeader })
+  await startRound({ level, ngrokUrl, auth })
 
-  await runWorker(authHeader)
+  await runWorker(auth)
 }
 
 startServer().catch((err) => {

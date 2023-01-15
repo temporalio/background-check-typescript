@@ -1,8 +1,8 @@
 import { DefaultLogger, Runtime, Worker } from '@temporalio/worker'
 import { createActivities } from './activities'
-import { AuthHeader } from './types'
+import { Auth } from './types'
 
-export async function runWorker(authHeader: AuthHeader) {
+export async function runWorker(auth: Auth) {
   // Hide Activity failure warnings:
   Runtime.install({
     logger: new DefaultLogger('ERROR'),
@@ -10,7 +10,7 @@ export async function runWorker(authHeader: AuthHeader) {
 
   const worker = await Worker.create({
     workflowsPath: require.resolve('./workflows'),
-    activities: createActivities(authHeader),
+    activities: createActivities(auth),
     taskQueue: 'background-check',
   })
 
