@@ -1,23 +1,21 @@
 import { requestApproval, getApprovalStatus, startSearch, getSearchResult, sendReport } from './activities'
-import { AuthHeader, SearchInfo } from './types'
+import { Auth, SearchInfo } from './types'
 
 interface BackgroundCheckInput {
   customerId: string
   userId: string
-  authHeader: AuthHeader
+  auth: Auth
 }
 
-export async function backgroundCheck({ customerId, userId, authHeader }: BackgroundCheckInput): Promise<void> {
-  const approvalRequestId = await retry(() => requestApproval({ customerId, userId, authHeader }))
-  await retry(() => getApprovalStatus({ approvalRequestId, targetStatus: 'complete', authHeader }))
+export async function backgroundCheck({ customerId, userId, auth }: BackgroundCheckInput): Promise<void> {
+  await requestApproval({ customerId, userId, auth })
+  const approvalId = await retry(() => getApprovalStatus({ customerId, userId, targetStatus: 'complete', auth }))
 
   const [ssnSearchId, creditSearchId, socialSearchId] = await Promise.all(
-    ['ssn', 'credit', 'social'].map((type) => performSearch({ type, customerId, userId, authHeader }))
+    ['ssn', 'credit', 'social'].map((type) => performSearch({ type, customerId, userId, auth }))
   )
 
-  await retry(() =>
-    sendReport({ customerId, userId, approvalRequestId, ssnSearchId, creditSearchId, socialSearchId, authHeader })
-  )
+  await retry(() => sendReport({ customerId, userId, approvalId, ssnSearchId, creditSearchId, socialSearchId, auth }))
 }
 
 async function performSearch(info: SearchInfo) {

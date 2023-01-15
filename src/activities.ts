@@ -1,54 +1,51 @@
 import axios from 'axios'
 import { API } from './constants'
-import { Status, StatusEnum, StatusConfirmation, SearchInfo, AuthHeader } from './types'
+import { StatusEnum, StatusConfirmation, SearchInfo, Auth } from './types'
 
 export async function requestApproval({
   customerId,
   userId,
-  authHeader,
+  auth,
 }: {
   customerId: string
   userId: string
-  authHeader: AuthHeader
-}): Promise<string> {
-  const response = await axios.post(
-    `${API}/notify`,
-    { customer: customerId, user: userId },
-    { ...authHeader, timeout: 1000 }
-  )
+  auth: Auth
+}): Promise<void> {
+  const response = await axios.post(`${API}/notify/${customerId}/${userId}`, undefined, { auth, timeout: 1000 })
   console.log('📡 requestApproval response:', response.data)
-
-  const requestId = response.data.uuid
-  return requestId
 }
 
 export async function getApprovalStatus({
-  approvalRequestId,
+  customerId,
+  userId,
   targetStatus,
-  authHeader,
+  auth,
 }: {
-  approvalRequestId: string
+  customerId: string
+  userId: string
   targetStatus: StatusEnum
-  authHeader: AuthHeader
-}): Promise<void> {
-  const response = await axios.get(`${API}/notify/${approvalRequestId}`, { ...authHeader, timeout: 1000 })
+  auth: Auth
+}): Promise<string> {
+  const response = await axios.get(`${API}/notify/${customerId}/${userId}`, { auth, timeout: 1000 })
   console.log('📡 getApprovalStatus response:', response.data)
 
-  const status = (response.data as Status).status
-  switch (status) {
+  const data = response.data as StatusConfirmation
+  switch (data.status) {
+    case 'created':
     case 'started':
     case 'pending':
     case 'running':
       throw new Error('Approval still in progress')
     case targetStatus:
-      return
+      return data.confirmation!
     default:
-      throw new Error(`Unknown status: ${status}`)
+      throw new Error(`Unknown status: ${data.status}`)
   }
 }
 
-export async function startSearch({ type, customerId, userId, authHeader }: SearchInfo): Promise<void> {
-  await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId }, { ...authHeader, timeout: 1000 })
+export async function startSearch({ type, customerId, userId, auth }: SearchInfo): Promise<void> {
+  const response = await axios.post(`${API}/search/${type}/${customerId}/${userId}`, undefined, { auth, timeout: 1000 })
+  console.log('📡 startSearch response:', response.data)
 }
 
 type PollSearchInfo = SearchInfo & { targetStatus: StatusEnum }
@@ -58,17 +55,17 @@ export async function getSearchResult({
   customerId,
   userId,
   targetStatus,
-  authHeader,
+  auth,
 }: PollSearchInfo): Promise<string> {
-  const response = await axios.get(`${API}/search/${type}`, {
-    params: { user: userId, customer: customerId },
-    ...authHeader,
+  const response = await axios.get(`${API}/search/${type}/${customerId}/${userId}`, {
+    auth,
     timeout: 1000,
   })
   console.log('📡 getSearchResult response:', response.data)
 
   const data = response.data as StatusConfirmation
   switch (data.status) {
+    case 'created':
     case 'started':
     case 'pending':
     case 'running':
@@ -83,31 +80,31 @@ export async function getSearchResult({
 export async function sendReport({
   customerId,
   userId,
-  approvalRequestId,
+  approvalId,
   ssnSearchId,
   creditSearchId,
   socialSearchId,
-  authHeader,
+  auth,
 }: {
   customerId: string
   userId: string
-  approvalRequestId: string
+  approvalId: string
   ssnSearchId: string
   creditSearchId: string
   socialSearchId: string
-  authHeader: AuthHeader
+  auth: Auth
 }): Promise<void> {
   const response = await axios.post(
     `${API}/notify/report`,
     {
       customer: customerId,
       user: userId,
-      notify: approvalRequestId,
+      notify: approvalId,
       ssn: ssnSearchId,
       social: socialSearchId,
       credit: creditSearchId,
     },
-    { ...authHeader, timeout: 1000 }
+    { auth, timeout: 1000 }
   )
   console.log('📡 sendReport response:', response.data)
 }
