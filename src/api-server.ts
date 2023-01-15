@@ -1,5 +1,5 @@
 import express from 'express'
-import { AuthHeader } from './types'
+import { Auth } from './types'
 import { backgroundCheck } from './workflows'
 
 type Action = 'start' | 'cancel'
@@ -12,11 +12,11 @@ interface BackgroundBody {
 interface ApiServerOptions {
   username: string
   ngrokUrl: string
-  authHeader: AuthHeader
+  auth: Auth
   port?: number
 }
 
-export async function runApiServer({ username, ngrokUrl, authHeader, port = 3000 }: ApiServerOptions) {
+export async function runApiServer({ username, ngrokUrl, auth, port = 3000 }: ApiServerOptions) {
   const app = express()
   app.use(express.json())
 
@@ -33,7 +33,7 @@ export async function runApiServer({ username, ngrokUrl, authHeader, port = 3000
     console.log(`Receiving HTTP request: POST /background with body:`, req.body)
     const { customerId, userId, action } = req.body as BackgroundBody
     if (action === 'start') {
-      void backgroundCheck({ customerId, userId, authHeader })
+      void backgroundCheck({ customerId, userId, auth })
     } else if (action === 'cancel') {
       // TODO: Cancel background check
     }
