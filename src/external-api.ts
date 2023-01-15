@@ -8,8 +8,7 @@ export interface paths {
   "/players/register": {
     /**
      * Register A Player 
-     * @description Register a new username with the
-     * game.
+     * @description Register a new username with the game.
      */
     post: operations["register_a_player_players_register_post"];
     /**
@@ -18,6 +17,14 @@ export interface paths {
      * Player will only send their auth_token and no other data and we will invalidate it.
      */
     delete: operations["remove_player_from_game_players_register_delete"];
+  };
+  "/players/": {
+    /**
+     * Get Player Info 
+     * @description Verify your credentials are working properly. 
+     * If you get back what you sent in, with no HTTP errors, you win!
+     */
+    get: operations["get_player_info_players__get"];
   };
   "/rounds": {
     /**
@@ -39,27 +46,19 @@ export interface paths {
      */
     delete: operations["cancel_a_round_rounds__round__delete"];
   };
-  "/customers/": {
-    /** Create A Customer */
-    post: operations["create_a_customer_customers__post"];
-  };
-  "/users/": {
-    /** Create A User */
-    post: operations["create_a_user_users__post"];
-  };
-  "/notify": {
-    /**
-     * Create A Notification 
-     * @description Mimics sending an email to the human gettng background checked.
-     */
-    post: operations["create_a_notification_notify_post"];
-  };
-  "/notify/{notify_uuid}": {
+  "/notify/{customer}/{user}": {
     /**
      * Get Status Of Notification 
      * @description Queries to see if the notification has been responded to by the user being background checked
      */
-    get: operations["get_status_of_notification_notify__notify_uuid__get"];
+    get: operations["get_status_of_notification_notify__customer___user__get"];
+    /**
+     * Create A Notification 
+     * @description Mimics sending an email to the human getting background checked.
+     */
+    post: operations["create_a_notification_notify__customer___user__post"];
+  };
+  "/notify/{notify_uuid}": {
     /**
      * Cancel A Notification 
      * @description Allows the player to attempt to cancel the notify if it is in flight
@@ -70,17 +69,21 @@ export interface paths {
     /** Send Background Check Report */
     post: operations["send_background_check_report_notify_report_post"];
   };
-  "/search/{search_type}": {
+  "notify/report": {
+    /** Get Round Report */
+    get: operations["get_round_reportnotify_report_get"];
+  };
+  "/search/{search_type}/{customer}/{user}": {
     /**
      * Get Status Of Search 
      * @description Get the status of the check, returns a GUID if the status is 'complete'
      */
-    get: operations["get_status_of_search_search__search_type__get"];
+    get: operations["get_status_of_search_search__search_type___customer___user__get"];
     /**
      * Create A Search 
      * @description Start a check with name: {user}
      */
-    post: operations["create_a_search_search__search_type__post"];
+    post: operations["create_a_search_search__search_type___customer___user__post"];
   };
   "/search/{search_type}/{user}": {
     /**
@@ -102,11 +105,6 @@ export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
-    /** Customer */
-    Customer: {
-      /** Customer */
-      customer: string;
-    };
     /** CustomerReport */
     CustomerReport: {
       /** Users Sent */
@@ -183,14 +181,14 @@ export interface components {
       level: number;
       status: components["schemas"]["StatusEnum"];
       /** Round */
-      round: string;
+      round?: string;
     };
     /**
      * SearchesEnum 
      * @description An enumeration. 
      * @enum {string}
      */
-    SearchesEnum: "ssn" | "credit" | "social";
+    SearchesEnum: "notification" | "ssn" | "credit" | "social";
     /** Status */
     Status: {
       status: components["schemas"]["StatusEnum"];
@@ -206,22 +204,7 @@ export interface components {
      * @description An enumeration. 
      * @enum {string}
      */
-    StatusEnum: "started" | "cancelled" | "pending" | "running" | "complete";
-    /**
-     * User 
-     * @description User Model: contains a customer ID as 'customer' and user ID as 'user'
-     */
-    User: {
-      /** Customer */
-      customer: string;
-      /** User */
-      user: string;
-    };
-    /** Uuid */
-    Uuid: {
-      /** Uuid */
-      uuid: string;
-    };
+    StatusEnum: "created" | "started" | "pending" | "running" | "rejected" | "cancelled" | "failed" | "complete";
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -246,8 +229,7 @@ export interface operations {
   register_a_player_players_register_post: {
     /**
      * Register A Player 
-     * @description Register a new username with the
-     * game.
+     * @description Register a new username with the game.
      */
     requestBody: {
       content: {
@@ -280,6 +262,23 @@ export interface operations {
     responses: {
       /** @description Successful Response */
       204: never;
+      /** @description Not found */
+      404: never;
+    };
+  };
+  get_player_info_players__get: {
+    /**
+     * Get Player Info 
+     * @description Verify your credentials are working properly. 
+     * If you get back what you sent in, with no HTTP errors, you win!
+     */
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Player"];
+        };
+      };
       /** @description Not found */
       404: never;
     };
@@ -366,81 +365,46 @@ export interface operations {
       };
     };
   };
-  create_a_customer_customers__post: {
-    /** Create A Customer */
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Customer"];
-        };
-      };
-      /** @description Not found */
-      404: never;
-    };
-  };
-  create_a_user_users__post: {
-    /** Create A User */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["Customer"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["User"];
-        };
-      };
-      /** @description Not found */
-      404: never;
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  create_a_notification_notify_post: {
-    /**
-     * Create A Notification 
-     * @description Mimics sending an email to the human gettng background checked.
-     */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["User"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Uuid"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  get_status_of_notification_notify__notify_uuid__get: {
+  get_status_of_notification_notify__customer___user__get: {
     /**
      * Get Status Of Notification 
      * @description Queries to see if the notification has been responded to by the user being background checked
      */
     parameters: {
       path: {
-        notify_uuid: string;
+        customer: string;
+        user: string;
       };
     };
     responses: {
       /** @description Successful Response */
       200: {
+        content: {
+          "application/json": components["schemas"]["StatusConfirmation"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_a_notification_notify__customer___user__post: {
+    /**
+     * Create A Notification 
+     * @description Mimics sending an email to the human getting background checked.
+     */
+    parameters: {
+      path: {
+        customer: string;
+        user: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
         content: {
           "application/json": components["schemas"]["Status"];
         };
@@ -459,8 +423,9 @@ export interface operations {
      * @description Allows the player to attempt to cancel the notify if it is in flight
      */
     parameters: {
-      path: {
-        notify_uuid: Record<string, never>;
+      query: {
+        customer: string;
+        user: string;
       };
     };
     responses: {
@@ -500,18 +465,38 @@ export interface operations {
       };
     };
   };
-  get_status_of_search_search__search_type__get: {
+  get_round_reportnotify_report_get: {
+    /** Get Round Report */
+    parameters: {
+      query: {
+        round_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RoundReport"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_status_of_search_search__search_type___customer___user__get: {
     /**
      * Get Status Of Search 
      * @description Get the status of the check, returns a GUID if the status is 'complete'
      */
     parameters: {
-      query: {
-        customer: string;
-        user: string;
-      };
       path: {
         search_type: string;
+        customer: string;
+        user: string;
       };
     };
     responses: {
@@ -531,7 +516,7 @@ export interface operations {
       };
     };
   };
-  create_a_search_search__search_type__post: {
+  create_a_search_search__search_type___customer___user__post: {
     /**
      * Create A Search 
      * @description Start a check with name: {user}
@@ -539,16 +524,13 @@ export interface operations {
     parameters: {
       path: {
         search_type: components["schemas"]["SearchesEnum"];
-      };
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["User"];
+        customer: string;
+        user: string;
       };
     };
     responses: {
       /** @description Successful Response */
-      200: {
+      201: {
         content: {
           "application/json": components["schemas"]["Status"];
         };
