@@ -1,16 +1,8 @@
 import axios from 'axios'
 import { API } from './constants'
-import { AuthHeader } from './types'
+import { Auth } from './types'
 
-export async function startRound({
-  level,
-  ngrokUrl,
-  authHeader,
-}: {
-  level: string
-  ngrokUrl: string
-  authHeader: AuthHeader
-}) {
-  const response = await axios.post(`${API}/rounds`, { path: ngrokUrl, level }, authHeader)
+export async function startRound({ level, ngrokUrl, auth }: { level: string; ngrokUrl: string; auth: Auth }) {
+  const response = await axios.post(`${API}/rounds`, { path: ngrokUrl, level }, { auth })
   console.log('Round ID:', response.data.round)
 }

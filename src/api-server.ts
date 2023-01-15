@@ -17,6 +17,7 @@ interface ApiServerOptions {
 
 export async function runApiServer({ username, ngrokUrl, port = 3000 }: ApiServerOptions) {
   const client = new Client()
+
   const app = express()
   app.use(express.json())
 

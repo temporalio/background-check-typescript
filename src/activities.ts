@@ -1,35 +1,31 @@
 import { ApplicationFailure } from '@temporalio/activity'
 import axios from 'axios'
 import { API } from './constants'
-import { Status, StatusEnum, StatusConfirmation, SearchInfo, AuthHeader } from './types'
+import { StatusEnum, StatusConfirmation, SearchInfo, Auth } from './types'
 
 type PollSearchInfo = SearchInfo & { targetStatus: StatusEnum }
 
-export const createActivities = (authHeader: AuthHeader) => ({
-  async requestApproval({ customerId, userId }: { customerId: string; userId: string }): Promise<string> {
-    const response = await axios.post(
-      `${API}/notify`,
-      { customer: customerId, user: userId },
-      { ...authHeader, timeout: 1000 }
-    )
+export const createActivities = (auth: Auth) => ({
+  async requestApproval({ customerId, userId }: { customerId: string; userId: string }): Promise<void> {
+    const response = await axios.post(`${API}/notify/${customerId}/${userId}`, undefined, { auth, timeout: 1000 })
     console.log('📡 requestApproval response:', response.data)
-
-    const requestId = response.data.uuid
-    return requestId
   },
 
   async getApprovalStatus({
-    approvalRequestId,
+    customerId,
+    userId,
     targetStatus,
   }: {
-    approvalRequestId: string
+    customerId: string
+    userId: string
     targetStatus: StatusEnum
-  }): Promise<void> {
-    const response = await axios.get(`${API}/notify/${approvalRequestId}`, { ...authHeader, timeout: 1000 })
+  }): Promise<string> {
+    const response = await axios.get(`${API}/notify/${customerId}/${userId}`, { auth, timeout: 1000 })
     console.log('📡 getApprovalStatus response:', response.data)
 
-    const status = (response.data as Status).status
-    switch (status) {
+    const data = response.data as StatusConfirmation
+    switch (data.status) {
+      case 'created':
       case 'started':
       case 'pending':
       case 'running':
@@ -37,26 +33,30 @@ export const createActivities = (authHeader: AuthHeader) => ({
       case 'rejected':
         throw ApplicationFailure.create({ message: 'Approval denied', nonRetryable: true })
       case targetStatus:
-        return
+        return data.confirmation!
       default:
-        throw new Error(`Unknown status: ${status}`)
+        throw new Error(`Unknown status: ${data.status}`)
     }
   },
 
   async startSearch({ type, customerId, userId }: SearchInfo): Promise<void> {
-    await axios.post(`${API}/search/${type}`, { customer: customerId, user: userId }, { ...authHeader, timeout: 1000 })
+    const response = await axios.post(`${API}/search/${type}/${customerId}/${userId}`, undefined, {
+      auth,
+      timeout: 1000,
+    })
+    console.log('📡 startSearch response:', response.data)
   },
 
   async getSearchResult({ type, customerId, userId, targetStatus }: PollSearchInfo): Promise<string> {
-    const response = await axios.get(`${API}/search/${type}`, {
-      params: { user: userId, customer: customerId },
-      ...authHeader,
+    const response = await axios.get(`${API}/search/${type}/${customerId}/${userId}`, {
+      auth,
       timeout: 1000,
     })
     console.log('📡 getSearchResult response:', response.data)
 
     const data = response.data as StatusConfirmation
     switch (data.status) {
+      case 'created':
       case 'started':
       case 'pending':
       case 'running':
@@ -71,14 +71,14 @@ export const createActivities = (authHeader: AuthHeader) => ({
   async sendReport({
     customerId,
     userId,
-    approvalRequestId,
+    approvalId,
     ssnSearchId,
     creditSearchId,
     socialSearchId,
   }: {
     customerId: string
     userId: string
-    approvalRequestId: string
+    approvalId?: string
     ssnSearchId?: string
     creditSearchId?: string
     socialSearchId?: string
@@ -88,12 +88,12 @@ export const createActivities = (authHeader: AuthHeader) => ({
       {
         customer: customerId,
         user: userId,
-        notify: approvalRequestId,
+        notify: approvalId,
         ssn: ssnSearchId,
         social: socialSearchId,
         credit: creditSearchId,
       },
-      { ...authHeader, timeout: 1000 }
+      { auth, timeout: 1000 }
     )
     console.log('📡 sendReport response:', response.data)
   },
