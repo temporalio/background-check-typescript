@@ -37,9 +37,9 @@ export async function backgroundCheck({ customerId, userId }: BackgroundCheckInp
       }
 
       await Promise.all([
-        async () => (ssnSearchId = await performSearch({ type: 'ssn', customerId, userId })),
-        async () => (creditSearchId = await performSearch({ type: 'credit', customerId, userId })),
-        async () => (socialSearchId = await performSearch({ type: 'social', customerId, userId })),
+        (async () => (ssnSearchId = await performSearch({ type: 'ssn', customerId, userId })))(),
+        (async () => (creditSearchId = await performSearch({ type: 'credit', customerId, userId })))(),
+        (async () => (socialSearchId = await performSearch({ type: 'social', customerId, userId })))(),
       ])
     } catch (err) {
       console.log((err as Error).message)
