@@ -102,11 +102,9 @@ export const createActivities = (auth: Auth) => ({
     socialSearchId?: string
   }): Promise<void> {
     const response = await axios.post(
-      `${API}/notify/report`,
+      `${API}/notify/report/${customerId}/${userId}`,
       {
-        customer: customerId,
-        user: userId,
-        notify: approvalId,
+        notification: approvalId,
         ssn: ssnSearchId,
         social: socialSearchId,
         credit: creditSearchId,
