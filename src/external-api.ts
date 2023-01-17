@@ -46,6 +46,17 @@ export interface paths {
      */
     delete: operations["cancel_a_round_rounds__round__delete"];
   };
+  "/customers/": {
+    /**
+     * Get The First Customer 
+     * @description Used for integration testing the endpoints
+     */
+    post: operations["get_the_first_customer_customers__post"];
+  };
+  "/users/": {
+    /** Get The First User */
+    post: operations["get_the_first_user_users__post"];
+  };
   "/notify/{customer}/{user}": {
     /**
      * Get Status Of Notification 
@@ -65,13 +76,9 @@ export interface paths {
      */
     delete: operations["cancel_a_notification_notify__notify_uuid__delete"];
   };
-  "/notify/report": {
-    /** Send Background Check Report */
-    post: operations["send_background_check_report_notify_report_post"];
-  };
-  "notify/report": {
-    /** Get Round Report */
-    get: operations["get_round_reportnotify_report_get"];
+  "/notify/report/{customer}/{user}": {
+    /** Send Background Check Confirmations */
+    post: operations["send_background_check_confirmations_notify_report__customer___user__post"];
   };
   "/search/{search_type}/{customer}/{user}": {
     /**
@@ -80,17 +87,49 @@ export interface paths {
      */
     get: operations["get_status_of_search_search__search_type___customer___user__get"];
     /**
-     * Create A Search 
+     * Start A Search 
      * @description Start a check with name: {user}
      */
-    post: operations["create_a_search_search__search_type___customer___user__post"];
+    post: operations["start_a_search_search__search_type___customer___user__post"];
   };
-  "/search/{search_type}/{user}": {
+  "/report": {
     /**
-     * Cancel A Search 
-     * @description Allows cancelling the check_name for the customer/user that are passed
+     * Get Round Report 
+     * @description Get the report at the end of the round
      */
-    delete: operations["cancel_a_search_search__search_type___user__delete"];
+    get: operations["get_round_report_report_get"];
+  };
+  "/background-check/{customer}/{user}": {
+    /**
+     * Cancel A Background Check 
+     * @description Send a request to cancel the background check
+     */
+    delete: operations["cancel_a_background_check_background_check__customer___user__delete"];
+  };
+  "/confirm": {
+    /**
+     * Confirm Endpoint 
+     * @description Mocking out the client so we can test, needs to respond with the testing user that we make up during tests.
+     * We can pass the username along in the header as a result.
+     * When testing outside of pytest, the user defaults to test_user
+     */
+    post: operations["confirm_endpoint_confirm_post"];
+  };
+  "/background": {
+    /**
+     * Background Endpoint 
+     * @description For testing, we want to respond with confirmed.
+     * @todo-game we need to make this more resilient against bad client implementations that do non-standard shit.
+     */
+    post: operations["background_endpoint_background_post"];
+  };
+  "/complete": {
+    /**
+     * Complete Endpoint 
+     * @description For testing, we want to respond with confirmed.
+     * @todo-game we need to make this more resilient against bad client implementations that do non-standard shit.
+     */
+    post: operations["complete_endpoint_complete_post"];
   };
   "/": {
     /**
@@ -105,12 +144,45 @@ export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
+    /** Background */
+    Background: {
+      /** Customer */
+      customer?: string;
+      /** User */
+      user?: string;
+      /** Action */
+      action?: string;
+    };
+    /** Customer */
+    Customer: {
+      /** Customer */
+      customer: string;
+    };
     /** CustomerReport */
     CustomerReport: {
+      /** Complete */
+      complete?: number;
+      /** Complete Percent */
+      complete_percent?: number;
+      /** Expected */
+      expected?: number;
+      /** Failed */
+      failed?: number;
+      /** Failed Percent */
+      failed_percent?: number;
+      /** Processed */
+      processed?: number;
+      /** Processed Percent */
+      processed_percent?: number;
+      /** Cancelled */
+      cancelled?: number;
+      /** Cancelled Percent */
+      cancelled_percent?: number;
+      status?: components["schemas"]["StatusEnum"];
+      /** Users Calculated */
+      users_calculated?: (string)[];
       /** Users Sent */
-      users_sent: number;
-      /** Completed */
-      completed: number;
+      users_sent?: (string)[];
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -125,17 +197,10 @@ export interface components {
        */
       message?: string;
     };
-    /**
-     * NotifyReport 
-     * @description User Model: contains a customer ID as 'customer' and user ID as 'user'
-     */
+    /** NotifyReport */
     NotifyReport: {
-      /** Customer */
-      customer: string;
-      /** User */
-      user: string;
-      /** Notify */
-      notify: string;
+      /** Notification */
+      notification: string;
       /** Ssn */
       ssn: string;
       /** Social */
@@ -168,10 +233,13 @@ export interface components {
       customers: {
         [key: string]: components["schemas"]["CustomerReport"] | undefined;
       };
-      /** Total Rounds */
-      total_rounds: number;
+      totals?: components["schemas"]["CustomerReport"];
+      /** Rounds */
+      rounds?: {
+        [key: string]: number | undefined;
+      };
       /** Next Level */
-      next_level: number;
+      next_level?: number;
     };
     /** RoundStatus */
     RoundStatus: {
@@ -205,6 +273,16 @@ export interface components {
      * @enum {string}
      */
     StatusEnum: "created" | "started" | "pending" | "running" | "rejected" | "cancelled" | "failed" | "complete";
+    /**
+     * User 
+     * @description User Model: contains a customer ID as 'customer' and user ID as 'user'
+     */
+    User: {
+      /** Customer */
+      customer: string;
+      /** User */
+      user: string;
+    };
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -298,7 +376,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["RoundStatus"];
+          "application/json": Record<string, never>;
         };
       };
       /** @description Not found */
@@ -363,6 +441,35 @@ export interface operations {
           "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
+    };
+  };
+  get_the_first_customer_customers__post: {
+    /**
+     * Get The First Customer 
+     * @description Used for integration testing the endpoints
+     */
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Customer"];
+        };
+      };
+      /** @description Not found */
+      404: never;
+    };
+  };
+  get_the_first_user_users__post: {
+    /** Get The First User */
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["User"];
+        };
+      };
+      /** @description Not found */
+      404: never;
     };
   };
   get_status_of_notification_notify__customer___user__get: {
@@ -443,8 +550,14 @@ export interface operations {
       };
     };
   };
-  send_background_check_report_notify_report_post: {
-    /** Send Background Check Report */
+  send_background_check_confirmations_notify_report__customer___user__post: {
+    /** Send Background Check Confirmations */
+    parameters: {
+      path: {
+        customer: string;
+        user: string;
+      };
+    };
     requestBody: {
       content: {
         "application/json": components["schemas"]["NotifyReport"];
@@ -452,31 +565,9 @@ export interface operations {
     };
     responses: {
       /** @description Successful Response */
-      200: {
+      201: {
         content: {
-          "application/json": components["schemas"]["RoundReport"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  get_round_reportnotify_report_get: {
-    /** Get Round Report */
-    parameters: {
-      query: {
-        round_id: string;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["RoundReport"];
+          "application/json": Record<string, never>;
         };
       };
       /** @description Validation Error */
@@ -516,9 +607,9 @@ export interface operations {
       };
     };
   };
-  create_a_search_search__search_type___customer___user__post: {
+  start_a_search_search__search_type___customer___user__post: {
     /**
-     * Create A Search 
+     * Start A Search 
      * @description Start a check with name: {user}
      */
     parameters: {
@@ -545,14 +636,28 @@ export interface operations {
       };
     };
   };
-  cancel_a_search_search__search_type___user__delete: {
+  get_round_report_report_get: {
     /**
-     * Cancel A Search 
-     * @description Allows cancelling the check_name for the customer/user that are passed
+     * Get Round Report 
+     * @description Get the report at the end of the round
+     */
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RoundReport"];
+        };
+      };
+    };
+  };
+  cancel_a_background_check_background_check__customer___user__delete: {
+    /**
+     * Cancel A Background Check 
+     * @description Send a request to cancel the background check
      */
     parameters: {
       path: {
-        search_type: components["schemas"]["SearchesEnum"];
+        customer: string;
         user: string;
       };
     };
@@ -560,7 +665,7 @@ export interface operations {
       /** @description Successful Response */
       202: {
         content: {
-          "application/json": components["schemas"]["StatusConfirmation"];
+          "application/json": Record<string, never>;
         };
       };
       /** @description Not found */
@@ -571,6 +676,69 @@ export interface operations {
           "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
+    };
+  };
+  confirm_endpoint_confirm_post: {
+    /**
+     * Confirm Endpoint 
+     * @description Mocking out the client so we can test, needs to respond with the testing user that we make up during tests.
+     * We can pass the username along in the header as a result.
+     * When testing outside of pytest, the user defaults to test_user
+     */
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      /** @description Not found */
+      404: never;
+    };
+  };
+  background_endpoint_background_post: {
+    /**
+     * Background Endpoint 
+     * @description For testing, we want to respond with confirmed.
+     * @todo-game we need to make this more resilient against bad client implementations that do non-standard shit.
+     */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["Background"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      /** @description Not found */
+      404: never;
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  complete_endpoint_complete_post: {
+    /**
+     * Complete Endpoint 
+     * @description For testing, we want to respond with confirmed.
+     * @todo-game we need to make this more resilient against bad client implementations that do non-standard shit.
+     */
+    responses: {
+      /** @description Successful Response */
+      201: {
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      /** @description Not found */
+      404: never;
     };
   };
   welcome__get: {
