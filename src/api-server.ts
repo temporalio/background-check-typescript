@@ -4,8 +4,8 @@ import { backgroundCheck } from './workflows'
 
 type Action = 'start' | 'cancel'
 interface BackgroundBody {
-  customerId: string
-  userId: string
+  customer: string
+  user: string
   action: Action
 }
 
@@ -32,7 +32,7 @@ export async function runApiServer({ username, ngrokUrl, port = 3000 }: ApiServe
 
   app.post('/background', async (req, res) => {
     console.log(`Receiving HTTP request: POST /background with body:`, req.body)
-    const { customerId, userId, action } = req.body as BackgroundBody
+    const { customer: customerId, user: userId, action } = req.body as BackgroundBody
     const workflowId = `${customerId}__${userId}`
     if (action === 'start') {
       await client.workflow.start(backgroundCheck, {
